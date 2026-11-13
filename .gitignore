@@ -1,0 +1,5 @@
+# Робочі файли поза git: опис проєкту (HANDOFF.md), журнал Figma, плани, специфікація, прототип, лабораторні
+.claude/docs/
+
+# Особисті налаштування Claude Code (спільні .claude/settings.json, commands/, agents/ — у git)
+.claude/settings.local.json

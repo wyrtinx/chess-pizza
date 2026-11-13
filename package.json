@@ -1,0 +1,7 @@
+{
+  "name": "chess-pizza",
+  "private": true,
+  "workspaces": [
+    "backend"
+  ]
+}

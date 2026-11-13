@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+# Generated files: collapsed in GitHub diffs, excluded from language stats
+bun.lock linguist-generated=true
+backend/openapi.json linguist-generated=true
