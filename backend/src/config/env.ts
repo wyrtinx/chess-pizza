@@ -1,5 +1,16 @@
 import { Transform, type TransformFnParams } from 'class-transformer';
-import { ArrayNotEmpty, IsBoolean, IsIn, IsInt, Matches, Max, Min } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsString,
+  Matches,
+  Max,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 
 export const NODE_ENVS = ['development', 'test', 'production'] as const;
 
@@ -14,6 +25,25 @@ const rawValue = ({ obj, key }: TransformFnParams): unknown => {
   const source: unknown = obj;
   return typeof source === 'object' && source !== null ? Reflect.get(source, key) : undefined;
 };
+
+const toBoolean = (params: TransformFnParams): unknown => {
+  const raw = rawValue(params);
+  if (raw === 'true') return true;
+  if (raw === 'false') return false;
+  return raw;
+};
+
+const emptyToUndefined = (params: TransformFnParams): unknown => {
+  const raw = rawValue(params);
+  return raw === '' ? undefined : raw;
+};
+
+// Credentials are optional for Mailpit, but Gmail in production needs them.
+const isSmtpAuthRequired = (env: Env): boolean =>
+  env.NODE_ENV === 'production' || env.SMTP_USER !== undefined || env.SMTP_PASS !== undefined;
+
+const MAIL_FROM_PATTERN =
+  /^(?:[^<>]+ <[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+>|[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+)$/;
 
 export class Env {
   @IsIn(NODE_ENVS)
@@ -44,12 +74,7 @@ export class Env {
   @Min(0)
   TRUST_PROXY: number = 0;
 
-  @Transform((params) => {
-    const raw = rawValue(params);
-    if (raw === 'true') return true;
-    if (raw === 'false') return false;
-    return raw;
-  })
+  @Transform(toBoolean)
   @IsBoolean()
   DOCS_ENABLED: boolean = false;
 
@@ -58,4 +83,32 @@ export class Env {
 
   @Matches(/^\d+(b|kb|mb)$/i)
   BODY_LIMIT: string = '100kb';
+
+  @IsString()
+  @IsNotEmpty()
+  SMTP_HOST: string;
+
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  SMTP_PORT: number;
+
+  @Transform(toBoolean)
+  @IsBoolean()
+  SMTP_SECURE: boolean = false;
+
+  @Transform(emptyToUndefined)
+  @ValidateIf(isSmtpAuthRequired)
+  @IsString()
+  @IsNotEmpty()
+  SMTP_USER?: string;
+
+  @Transform(emptyToUndefined)
+  @ValidateIf(isSmtpAuthRequired)
+  @IsString()
+  @IsNotEmpty()
+  SMTP_PASS?: string;
+
+  @Matches(MAIL_FROM_PATTERN)
+  MAIL_FROM: string;
 }
