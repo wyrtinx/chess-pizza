@@ -45,21 +45,21 @@ bun run start:prod   # запуск зібраного: bun dist/main.js
 
 ## Скрипти
 
-| Скрипт            | Що робить                                                             |
-| ----------------- | --------------------------------------------------------------------- |
-| `build`           | `nest build` (tsc + CLI-плагін Swagger)                               |
-| `start`           | зібрати й запустити під Bun                                           |
-| `start:dev`       | те саме з перезапуском при зміні файлів                               |
-| `start:prod`      | `bun dist/main.js`                                                    |
-| `typecheck`       | `tsc --noEmit`                                                        |
-| `test`            | `bun test` — smoke-тести потребують `db:up` і `db:migrate:test`       |
-| `test:watch`      | `bun test --watch`                                                    |
-| `openapi`         | зібрати й записати контракт API в `openapi.json`                      |
-| `db:generate`     | згенерувати клієнт Prisma в `src/generated/prisma`                    |
-| `db:migrate`      | `prisma migrate dev` — створити й застосувати міграцію                |
-| `db:migrate:test` | `prisma migrate deploy` на базу з `.env.test`                         |
-| `db:seed`         | `prisma db seed` — стартові дані з `prisma/seed.ts` (у базу з `.env`) |
-| `db:studio`       | Prisma Studio                                                         |
+| Скрипт            | Що робить                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| `build`           | `nest build` (tsc + CLI-плагін Swagger)                                            |
+| `start`           | зібрати й запустити під Bun                                                        |
+| `start:dev`       | те саме з перезапуском при зміні файлів                                            |
+| `start:prod`      | `bun dist/main.js`                                                                 |
+| `typecheck`       | `tsc --noEmit`                                                                     |
+| `test`            | `bun test` — smoke-тести потребують `db:up`, `db:migrate:test` і `MAILPIT_API_URL` |
+| `test:watch`      | `bun test --watch`                                                                 |
+| `openapi`         | зібрати й записати контракт API в `openapi.json`                                   |
+| `db:generate`     | згенерувати клієнт Prisma в `src/generated/prisma`                                 |
+| `db:migrate`      | `prisma migrate dev` — створити й застосувати міграцію                             |
+| `db:migrate:test` | `prisma migrate deploy` на базу з `.env.test`                                      |
+| `db:seed`         | `prisma db seed` — стартові дані з `prisma/seed.ts` (у базу з `.env`)              |
+| `db:studio`       | Prisma Studio                                                                      |
 
 Після `db:migrate` Prisma 7 сама не запускає ні `generate`, ні seed: клієнт оновлює `db:generate`, дані — `db:seed`.
 
@@ -79,3 +79,15 @@ bun run start:prod   # запуск зібраного: bun dist/main.js
 | `DOCS_ENABLED` | `false`          | `true` — документація API на `/docs`                                   |
 | `LOG_LEVEL`    | `info`           | рівень логів pino; `silent` вимикає (зручно в `.env.test`)             |
 | `BODY_LIMIT`   | `100kb`          | ліміт розміру JSON-тіла запиту                                         |
+| `SMTP_HOST`    | —                | SMTP-сервер: `localhost` (Mailpit) або `smtp.gmail.com`                |
+| `SMTP_PORT`    | —                | `1025` (Mailpit) або `465` (Gmail)                                     |
+| `SMTP_SECURE`  | `false`          | `true` — TLS одразу (порт 465)                                         |
+| `SMTP_USER`    | —                | логін SMTP; обов'язковий лише при `NODE_ENV=production`                |
+| `SMTP_PASS`    | —                | пароль SMTP (у Gmail — «пароль застосунку»); як і `SMTP_USER`          |
+| `MAIL_FROM`    | —                | відправник: `Chess Pizza <адреса>`; у Gmail — адреса акаунта           |
+
+Лише для тестів (`.env.test`), застосунок її не читає:
+
+| Змінна            | Навіщо                                                                        |
+| ----------------- | ----------------------------------------------------------------------------- |
+| `MAILPIT_API_URL` | HTTP API Mailpit (`http://localhost:8025`), з якого smoke-тести читають листи |
