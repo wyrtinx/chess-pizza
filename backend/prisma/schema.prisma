@@ -10,3 +10,57 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum ProductCategory {
+  PIZZA
+  DRINK
+  DESSERT
+
+  @@map("product_category")
+}
+
+model Product {
+  id           String          @id @default(uuid(7)) @db.Uuid
+  name         Json
+  description  Json?
+  category     ProductCategory
+  basePrice    Int             @map("base_price")
+  weightGrams  Int?            @map("weight_grams")
+  volumeMl     Int?            @map("volume_ml")
+  isVegetarian Boolean         @default(false) @map("is_vegetarian")
+  spicyLevel   Int             @default(0) @map("spicy_level") @db.SmallInt
+  isVisible    Boolean         @default(true) @map("is_visible")
+  imageKey     String?         @map("image_key")
+  sortOrder    Int             @default(0) @map("sort_order")
+  deletedAt    DateTime?       @map("deleted_at") @db.Timestamptz(3)
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([category])
+  @@index([isVisible, deletedAt])
+  @@map("products")
+}
+
+model Topping {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  code      String   @unique
+  name      Json
+  price     Int
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("toppings")
+}
+
+model Pizzeria {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  address   Json
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("pizzerias")
+}
