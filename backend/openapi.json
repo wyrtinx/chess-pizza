@@ -33,6 +33,136 @@
           "health"
         ]
       }
+    },
+    "/api/v1/products": {
+      "get": {
+        "description": "Усі видимі товари одним списком, без пагінації: спершу найпопулярніші.\nПошук, категорії, «Вегетаріанське» й сортування робить фронтенд.\nПриховані й видалені товари не віддаються.",
+        "operationId": "ProductsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Вітрина",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/v1/products/{id}": {
+      "get": {
+        "description": "Прихований або видалений товар — `404`, як і неіснуючий.",
+        "operationId": "ProductsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Ідентифікатор (UUID).",
+            "schema": {
+              "format": "uuid",
+              "example": "0199a3f2-7c1e-7b7a-9f0e-2d6c5a4b3c21",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`VALIDATION_FAILED`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`PRODUCT_NOT_FOUND`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Товар за ідентифікатором",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/v1/pizzerias": {
+      "get": {
+        "description": "Точки, де можна забрати замовлення. На ціну вибір піцерії не впливає.",
+        "operationId": "PizzeriasController_findActive",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PizzeriaResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Піцерії для самовивозу",
+        "tags": [
+          "pizzerias"
+        ]
+      }
+    },
+    "/api/v1/meta": {
+      "get": {
+        "description": "Числа, за якими сервер рахує ціни й знижки: опції піци, добавки, доставка, самовивіз,\nбонуси, години роботи. Фронтенд бере їх звідси й не дублює в коді.\nОстаточну ціну завжди рахує сервер.",
+        "operationId": "MetaController_getMeta",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Публічні константи",
+        "tags": [
+          "meta"
+        ]
+      }
     }
   },
   "info": {
@@ -190,6 +320,438 @@
           "statusCode",
           "message",
           "requestId"
+        ]
+      },
+      "ProductCategory": {
+        "type": "string",
+        "enum": [
+          "PIZZA",
+          "DRINK",
+          "DESSERT"
+        ],
+        "description": "Категорія. Розмір, тісто й добавки є лише в піци."
+      },
+      "LocalizedTextDto": {
+        "type": "object",
+        "properties": {
+          "uk": {
+            "type": "string",
+            "description": "Текст українською.",
+            "example": "Маргарита"
+          },
+          "en": {
+            "type": "string",
+            "description": "Текст англійською. Якщо його немає, фронтенд показує український.",
+            "example": "Margherita"
+          }
+        },
+        "required": [
+          "uk"
+        ]
+      },
+      "ProductResponseDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "description": "Категорія. Розмір, тісто й добавки є лише в піци.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductCategory"
+              }
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Ідентифікатор товару (UUID).",
+            "example": "0199a3f2-7c1e-7b7a-9f0e-2d6c5a4b3c21"
+          },
+          "name": {
+            "description": "Назва.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedTextDto"
+              }
+            ]
+          },
+          "description": {
+            "nullable": true,
+            "description": "Склад або короткий опис.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedTextDto"
+              }
+            ]
+          },
+          "basePrice": {
+            "type": "number",
+            "description": "Ціна у копійках. Для піци — ціна розміру 30 см; надбавки за розмір і добавки — у `GET /meta`.",
+            "example": 24900
+          },
+          "weightGrams": {
+            "type": "number",
+            "nullable": true,
+            "description": "Вага у грамах (для піци — розміру 30 см). `null` — для напоїв.",
+            "example": 520
+          },
+          "volumeMl": {
+            "type": "number",
+            "nullable": true,
+            "description": "Об’єм у мілілітрах. `null` — для всього, крім напоїв."
+          },
+          "isVegetarian": {
+            "type": "boolean",
+            "description": "Вегетаріанське."
+          },
+          "spicyLevel": {
+            "type": "number",
+            "description": "Гострота від 0 до 4. Мітка «Гостре» — від 3.",
+            "example": 0
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Адреса фото. `null` — фото немає, фронтенд показує заглушку."
+          },
+          "popularity": {
+            "type": "number",
+            "description": "Продано штук за останні 30 днів. Список вітрини вже відсортований за цим полем.",
+            "example": 0
+          },
+          "isNew": {
+            "type": "boolean",
+            "description": "«Новинка»: товар додано менше ніж 30 днів тому."
+          },
+          "isHit": {
+            "type": "boolean",
+            "description": "«Хіт»: товар у трійці найпопулярніших."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Коли товар додано — для сортування «новинки»."
+          }
+        },
+        "required": [
+          "category",
+          "id",
+          "name",
+          "description",
+          "basePrice",
+          "weightGrams",
+          "volumeMl",
+          "isVegetarian",
+          "spicyLevel",
+          "imageUrl",
+          "popularity",
+          "isNew",
+          "isHit",
+          "createdAt"
+        ]
+      },
+      "PizzeriaResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Ідентифікатор піцерії (UUID) — його передають при оформленні самовивозу.",
+            "example": "0199a3f2-7c1e-7b7a-9f0e-2d6c5a4b3c21"
+          },
+          "address": {
+            "description": "Адреса.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedTextDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "address"
+        ]
+      },
+      "PizzaSize": {
+        "type": "string",
+        "enum": [
+          "CM25",
+          "CM30",
+          "CM35"
+        ],
+        "description": "Розмір піци."
+      },
+      "PizzaSizeOptionDto": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "description": "Розмір піци.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PizzaSize"
+              }
+            ]
+          },
+          "diameterCm": {
+            "type": "number",
+            "description": "Діаметр у сантиметрах.",
+            "example": 25
+          },
+          "priceDelta": {
+            "type": "number",
+            "description": "Різниця з ціною піци 30 см, у копійках. Може бути від’ємною.",
+            "example": -6000
+          }
+        },
+        "required": [
+          "size",
+          "diameterCm",
+          "priceDelta"
+        ]
+      },
+      "Dough": {
+        "type": "string",
+        "enum": [
+          "TRADITIONAL",
+          "THIN"
+        ],
+        "description": "Тісто."
+      },
+      "DoughOptionDto": {
+        "type": "object",
+        "properties": {
+          "dough": {
+            "description": "Тісто.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Dough"
+              }
+            ]
+          },
+          "priceDelta": {
+            "type": "number",
+            "description": "Доплата за тісто у копійках.",
+            "example": 0
+          }
+        },
+        "required": [
+          "dough",
+          "priceDelta"
+        ]
+      },
+      "ToppingResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Стабільний код добавки — саме його передають у кошик.",
+            "example": "burrata"
+          },
+          "name": {
+            "description": "Назва.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedTextDto"
+              }
+            ]
+          },
+          "price": {
+            "type": "number",
+            "description": "Ціна у копійках.",
+            "example": 7900
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "price"
+        ]
+      },
+      "PizzaMetaDto": {
+        "type": "object",
+        "properties": {
+          "defaultSize": {
+            "description": "Розмір, для якого вказано `basePrice` товару; його ж обрано в картці за замовчуванням.",
+            "enum": [
+              "CM25",
+              "CM30",
+              "CM35"
+            ],
+            "type": "string",
+            "example": "CM30"
+          },
+          "sizes": {
+            "description": "Розміри й різниця в ціні відносно піци 30 см.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PizzaSizeOptionDto"
+            }
+          },
+          "doughs": {
+            "description": "Види тіста.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DoughOptionDto"
+            }
+          },
+          "toppings": {
+            "description": "Добавки, спільні для всіх піц, у порядку показу.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ToppingResponseDto"
+            }
+          }
+        },
+        "required": [
+          "defaultSize",
+          "sizes",
+          "doughs",
+          "toppings"
+        ]
+      },
+      "DeliveryMetaDto": {
+        "type": "object",
+        "properties": {
+          "fee": {
+            "type": "number",
+            "description": "Вартість доставки у копійках.",
+            "example": 7900
+          },
+          "freeFrom": {
+            "type": "number",
+            "description": "Сума страв у копійках, від якої доставка безкоштовна. Знижки й бонуси на поріг не впливають.",
+            "example": 60000
+          },
+          "etaMinutes": {
+            "type": "number",
+            "description": "Середній час доставки у хвилинах — час для «Якнайшвидше».",
+            "example": 35
+          }
+        },
+        "required": [
+          "fee",
+          "freeFrom",
+          "etaMinutes"
+        ]
+      },
+      "PickupMetaDto": {
+        "type": "object",
+        "properties": {
+          "discountPercent": {
+            "type": "number",
+            "description": "Знижка самовивозу у відсотках від суми страв.",
+            "example": 5
+          }
+        },
+        "required": [
+          "discountPercent"
+        ]
+      },
+      "BonusesMetaDto": {
+        "type": "object",
+        "properties": {
+          "cashbackPercent": {
+            "type": "number",
+            "description": "Кешбек балами у відсотках від частини страв, оплаченої грошима.",
+            "example": 5
+          },
+          "firstOrderDiscountPercent": {
+            "type": "number",
+            "description": "Знижка на перше замовлення у відсотках від суми страв.",
+            "example": 10
+          },
+          "kopecksPerPoint": {
+            "type": "number",
+            "description": "Скільки копійок в одному балі (1 бал = 1 ₴).",
+            "example": 100
+          }
+        },
+        "required": [
+          "cashbackPercent",
+          "firstOrderDiscountPercent",
+          "kopecksPerPoint"
+        ]
+      },
+      "WorkingHoursMetaDto": {
+        "type": "object",
+        "properties": {
+          "opensAt": {
+            "type": "string",
+            "description": "Початок доставки й видачі, `HH:mm` за часом `timeZone`.",
+            "example": "12:00"
+          },
+          "closesAt": {
+            "type": "string",
+            "description": "Кінець доставки й видачі, `HH:mm` за часом `timeZone`.",
+            "example": "23:30"
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "Часовий пояс піцерії (IANA).",
+            "example": "Europe/Kyiv"
+          },
+          "slotLeadMinutes": {
+            "type": "number",
+            "description": "За скільки хвилин щонайменше можна обрати слот «До HH:00».",
+            "example": 60
+          }
+        },
+        "required": [
+          "opensAt",
+          "closesAt",
+          "timeZone",
+          "slotLeadMinutes"
+        ]
+      },
+      "MetaResponseDto": {
+        "type": "object",
+        "properties": {
+          "pizza": {
+            "description": "Опції піци: розміри, тісто, добавки.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PizzaMetaDto"
+              }
+            ]
+          },
+          "delivery": {
+            "description": "Доставка.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryMetaDto"
+              }
+            ]
+          },
+          "pickup": {
+            "description": "Самовивіз.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PickupMetaDto"
+              }
+            ]
+          },
+          "bonuses": {
+            "description": "Бонуси й знижка першого замовлення.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BonusesMetaDto"
+              }
+            ]
+          },
+          "workingHours": {
+            "description": "Години роботи.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkingHoursMetaDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "pizza",
+          "delivery",
+          "pickup",
+          "bonuses",
+          "workingHours"
         ]
       }
     }

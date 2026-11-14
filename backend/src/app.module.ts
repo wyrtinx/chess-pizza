@@ -10,6 +10,9 @@ import { AppThrottlerGuard } from './common/throttler/app-throttler.guard.js';
 import { throttlerOptions } from './common/throttler/throttler.config.js';
 import { validateEnv } from './config/validate-env.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { MetaModule } from './modules/meta/meta.module.js';
+import { PizzeriasModule } from './modules/pizzerias/pizzerias.module.js';
+import { ProductsModule } from './modules/products/products.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({
@@ -20,6 +23,9 @@ import { PrismaModule } from './prisma/prisma.module.js';
     ThrottlerModule.forRoot(throttlerOptions),
     PrismaModule,
     HealthModule,
+    ProductsModule,
+    PizzeriasModule,
+    MetaModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }],
 })
