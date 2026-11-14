@@ -3,3 +3,13 @@
 
 # Особисті налаштування Claude Code (спільні .claude/settings.json, commands/, agents/ — у git)
 .claude/settings.local.json
+
+# Залежності й результати збирання
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Секрети: у git — тільки .env.example
+.env*
+!.env.example

@@ -1,0 +1,6 @@
+# Lock file and generated API contract
+bun.lock
+backend/openapi.json
+
+# Project rules and working docs keep their own formatting
+.claude/
