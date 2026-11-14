@@ -11,7 +11,9 @@
     "format:check": "prettier --check .",
     "typecheck": "bun run --filter backend typecheck",
     "test": "bun run --filter backend test",
-    "build": "bun run --filter backend build"
+    "build": "bun run --filter backend build",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down"
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",

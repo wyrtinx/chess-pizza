@@ -1,0 +1,29 @@
+name: chess-pizza
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: chess
+      POSTGRES_PASSWORD: chess
+      POSTGRES_DB: chess_pizza
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      # Postgres 18 keeps data in /var/lib/postgresql/18/docker, not /var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U chess -d chess_pizza']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.33
+    ports:
+      - '127.0.0.1:1025:1025'
+      - '127.0.0.1:8025:8025'
+
+volumes:
+  postgres-data:
