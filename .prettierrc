@@ -1,0 +1,18 @@
+{
+  "singleQuote": true,
+  "printWidth": 100,
+  "experimentalTernaries": true,
+  "plugins": ["@ianvs/prettier-plugin-sort-imports"],
+  "importOrderParserPlugins": ["typescript", "decorators-legacy"],
+  "importOrderTypeScriptVersion": "6.0.3",
+  "importOrder": [
+    "<BUILTIN_MODULES>",
+    "^bun:(.*)$",
+    "",
+    "^@nestjs/(.*)$",
+    "",
+    "<THIRD_PARTY_MODULES>",
+    "",
+    "^[./]"
+  ]
+}

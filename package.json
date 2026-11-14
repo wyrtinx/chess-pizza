@@ -3,5 +3,20 @@
   "private": true,
   "workspaces": [
     "backend"
-  ]
+  ],
+  "scripts": {
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "bun run --filter backend typecheck",
+    "test": "bun run --filter backend test",
+    "build": "bun run --filter backend build"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
+    "oxlint": "^1.93.0",
+    "oxlint-tsgolint": "^7.0.2007",
+    "prettier": "^3.10.1"
+  }
 }
