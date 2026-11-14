@@ -7,7 +7,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({
   imports: [
-    // Bun loads .env files itself, so ConfigModule only validates process.env.
+    // Bun loads .env files itself; ConfigModule only validates process.env.
     ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true, validate: validateEnv }),
     PrismaModule,
     HealthModule,

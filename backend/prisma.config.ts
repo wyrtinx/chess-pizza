@@ -6,9 +6,7 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    // Not env('DATABASE_URL'): it throws when the variable is missing, and
-    // `prisma generate` (postinstall, CI, Docker build) must work without a database.
-    // Commands that do need a database fail on their own with an empty URL.
+    // Not env('DATABASE_URL'): it throws when unset, which breaks `prisma generate` in postinstall.
     url: process.env.DATABASE_URL ?? '',
   },
 });
