@@ -14,6 +14,7 @@ import { getRequestId } from '../request-id/request-id.middleware.js';
 import { AppException, type ErrorDetail } from './app.exception.js';
 import { ErrorCode, messageFromCode } from './error-code.js';
 import type { ErrorResponseDto } from './error-response.dto.js';
+import { RetryAfterException } from './retry-after.exception.js';
 
 interface ResolvedError {
   status: number;
@@ -59,6 +60,9 @@ export class AppExceptionFilter implements ExceptionFilter {
       requestId: getRequestId(http.getRequest<Request>()),
     };
 
+    if (exception instanceof RetryAfterException) {
+      response.setHeader('Retry-After', String(exception.retryAfterSeconds));
+    }
     response.status(status).json(body);
   }
 
