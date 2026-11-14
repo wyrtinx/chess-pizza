@@ -14,6 +14,12 @@ bun run db:up    # Postgres і Mailpit у Docker, чекає, поки стан�
 У `backend/` створіть `.env` і `.env.test` за зразком `.env.example` (значення для локального Docker — у коментарях файлу). Далі — з папки `backend/`:
 
 ```bash
+bun run db:migrate        # застосувати міграції до бази розробки
+bun run db:migrate:test   # застосувати міграції до тестової бази (для smoke-тестів)
+bun run db:seed           # меню, добавки й піцерії; повторний запуск безпечний
+```
+
+```bash
 bun run start:dev    # розробка: збирання nest build + перезапуск під Bun
 bun run build        # збирання в dist/
 bun run start:prod   # запуск зібраного: bun dist/main.js
@@ -39,19 +45,23 @@ bun run start:prod   # запуск зібраного: bun dist/main.js
 
 ## Скрипти
 
-| Скрипт        | Що робить                                              |
-| ------------- | ------------------------------------------------------ |
-| `build`       | `nest build` (tsc + CLI-плагін Swagger)                |
-| `start`       | зібрати й запустити під Bun                            |
-| `start:dev`   | те саме з перезапуском при зміні файлів                |
-| `start:prod`  | `bun dist/main.js`                                     |
-| `typecheck`   | `tsc --noEmit`                                         |
-| `test`        | `bun test` — smoke-тести потребують `db:up`            |
-| `test:watch`  | `bun test --watch`                                     |
-| `openapi`     | зібрати й записати контракт API в `openapi.json`       |
-| `db:generate` | згенерувати клієнт Prisma в `src/generated/prisma`     |
-| `db:migrate`  | `prisma migrate dev` — створити й застосувати міграцію |
-| `db:studio`   | Prisma Studio                                          |
+| Скрипт            | Що робить                                                             |
+| ----------------- | --------------------------------------------------------------------- |
+| `build`           | `nest build` (tsc + CLI-плагін Swagger)                               |
+| `start`           | зібрати й запустити під Bun                                           |
+| `start:dev`       | те саме з перезапуском при зміні файлів                               |
+| `start:prod`      | `bun dist/main.js`                                                    |
+| `typecheck`       | `tsc --noEmit`                                                        |
+| `test`            | `bun test` — smoke-тести потребують `db:up` і `db:migrate:test`       |
+| `test:watch`      | `bun test --watch`                                                    |
+| `openapi`         | зібрати й записати контракт API в `openapi.json`                      |
+| `db:generate`     | згенерувати клієнт Prisma в `src/generated/prisma`                    |
+| `db:migrate`      | `prisma migrate dev` — створити й застосувати міграцію                |
+| `db:migrate:test` | `prisma migrate deploy` на базу з `.env.test`                         |
+| `db:seed`         | `prisma db seed` — стартові дані з `prisma/seed.ts` (у базу з `.env`) |
+| `db:studio`       | Prisma Studio                                                         |
+
+Після `db:migrate` Prisma 7 сама не запускає ні `generate`, ні seed: клієнт оновлює `db:generate`, дані — `db:seed`.
 
 З кореня монорепо: `bun run lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `test`, `build`, `openapi`, `db:up`, `db:down`.
 
