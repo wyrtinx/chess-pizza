@@ -1,0 +1,31 @@
+# Local development services. Ports are bound to localhost only.
+name: chess-pizza
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: chess
+      POSTGRES_PASSWORD: chess
+      POSTGRES_DB: chess_pizza
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      # Postgres 18 images keep data in /var/lib/postgresql/<major>/docker
+      - postgres-data:/var/lib/postgresql
+      # Runs once, on an empty volume: creates the test database
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U chess -d chess_pizza']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.33
+    ports:
+      - '127.0.0.1:1025:1025' # SMTP
+      - '127.0.0.1:8025:8025' # web UI and HTTP API
+
+volumes:
+  postgres-data:

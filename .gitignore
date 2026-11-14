@@ -13,3 +13,6 @@ coverage/
 # Секрети: у git — тільки .env.example
 .env*
 !.env.example
+
+# Згенерований клієнт Prisma (bun run db:generate)
+generated/

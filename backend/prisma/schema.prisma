@@ -1,0 +1,14 @@
+// Connection URL lives in prisma.config.ts (CLI) and in PrismaService (runtime).
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  runtime                = "bun"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
