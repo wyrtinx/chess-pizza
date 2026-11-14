@@ -1,7 +1,8 @@
+import { afterEach, beforeEach, describe, it } from 'bun:test';
+
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 
-import { afterEach, beforeEach, describe, it } from 'bun:test';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 

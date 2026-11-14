@@ -1,6 +1,6 @@
-import { Test } from '@nestjs/testing';
-
 import { beforeEach, describe, expect, it } from 'bun:test';
+
+import { Test } from '@nestjs/testing';
 
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
