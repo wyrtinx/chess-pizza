@@ -1,5 +1,7 @@
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
+import { AppException } from '../../common/errors/app.exception.js';
+import { ErrorCode } from '../../common/errors/error-code.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { HealthResponseDto } from './dto/health-response.dto.js';
 
@@ -13,11 +15,8 @@ export class HealthService {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
     } catch (error) {
-      this.logger.error(
-        'Database health check failed',
-        error instanceof Error ? error.stack : undefined,
-      );
-      throw new ServiceUnavailableException();
+      this.logger.error(error, 'Database health check failed');
+      throw new AppException(ErrorCode.INTERNAL_ERROR, HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     return { status: 'ok' };

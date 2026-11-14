@@ -12,6 +12,7 @@
     "typecheck": "bun run --filter backend typecheck",
     "test": "bun run --filter backend test",
     "build": "bun run --filter backend build",
+    "openapi": "bun run --filter backend openapi",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down"
   },

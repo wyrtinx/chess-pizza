@@ -1,0 +1,197 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "description": "Перевіряє, що застосунок працює й база даних відповідає.\nВикористовується хостингом і Docker healthcheck.",
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`INTERNAL_ERROR`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Стан сервісу",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Chess Pizza API",
+    "description": "API сайту Chess Pizza: вітрина, кошик, оформлення, профіль із бонусами, адмін-панель.\n\nГроші — цілі числа в копійках, дати — ISO 8601 в UTC.\n\nУсі помилки мають один формат (`ErrorResponseDto`): машинний `code`, для помилок полів — `details`, і `requestId`, що збігається із заголовком `X-Request-Id`.\nБудь-який ендпоінт може відповісти `429 RATE_LIMITED` (із заголовком `Retry-After`) і `500 INTERNAL_ERROR`.",
+    "version": "1",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "cookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "cp_at"
+      }
+    },
+    "schemas": {
+      "HealthResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "description": "Стан сервісу. Завжди `ok`: якщо база даних недоступна, відповідь — `503`.",
+            "example": "ok",
+            "enum": [
+              "ok"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "VALIDATION_FAILED",
+          "UNAUTHORIZED",
+          "TOKEN_EXPIRED",
+          "FORBIDDEN",
+          "NOT_FOUND",
+          "CONFLICT",
+          "PAYLOAD_TOO_LARGE",
+          "RATE_LIMITED",
+          "INTERNAL_ERROR",
+          "INVALID",
+          "REQUIRED",
+          "NAME_TOO_SHORT",
+          "NAME_REQUIRED",
+          "EMAIL_INVALID",
+          "PASSWORD_TOO_SHORT",
+          "PHONE_INVALID",
+          "ADDRESS_INVALID",
+          "TERMS_NOT_ACCEPTED",
+          "PRICE_INVALID",
+          "PIZZA_PRICE_TOO_LOW",
+          "QUANTITY_INVALID",
+          "PIZZERIA_REQUIRED",
+          "CURSOR_INVALID",
+          "CODE_FORMAT_INVALID",
+          "UNKNOWN_FIELD",
+          "EMAIL_TAKEN",
+          "INVALID_CREDENTIALS",
+          "EMAIL_ALREADY_VERIFIED",
+          "CODE_INVALID",
+          "CODE_EXPIRED",
+          "CODE_ATTEMPTS_EXCEEDED",
+          "RESEND_TOO_SOON",
+          "SESSION_INVALID",
+          "SESSION_REUSED",
+          "RESET_TOKEN_INVALID",
+          "RESET_TOKEN_EXPIRED",
+          "PRODUCT_NOT_FOUND",
+          "PRODUCT_UNAVAILABLE",
+          "PRODUCT_OPTIONS_INVALID",
+          "CART_ITEM_NOT_FOUND",
+          "CART_LIMIT_EXCEEDED",
+          "CART_EMPTY",
+          "CART_HAS_UNAVAILABLE_ITEMS",
+          "ORDER_NOT_FOUND",
+          "ORDER_STATUS_TRANSITION_INVALID",
+          "PIZZERIA_NOT_FOUND",
+          "SLOT_UNAVAILABLE",
+          "BONUSES_UNAVAILABLE",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_MISMATCH",
+          "FILE_REQUIRED",
+          "FILE_TOO_LARGE",
+          "FILE_TYPE_NOT_ALLOWED"
+        ],
+        "description": "Машинний код помилки. Текст для людини підставляє фронтенд."
+      },
+      "ErrorDetailDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "Машинний код помилки поля. Текст для людини підставляє фронтенд.",
+            "example": "QUANTITY_INVALID",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorCode"
+              }
+            ]
+          },
+          "field": {
+            "type": "string",
+            "description": "Поле запиту, якого стосується помилка. Вкладені поля — через крапку.",
+            "example": "items.0.quantity"
+          }
+        },
+        "required": [
+          "code",
+          "field"
+        ]
+      },
+      "ErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "Машинний код помилки. Текст для людини підставляє фронтенд.",
+            "example": "VALIDATION_FAILED",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorCode"
+              }
+            ]
+          },
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP-статус відповіді.",
+            "example": 400
+          },
+          "message": {
+            "type": "string",
+            "description": "Короткий опис англійською — для розробника, не для показу користувачу.",
+            "example": "Validation failed"
+          },
+          "details": {
+            "description": "Помилки окремих полів. Є лише там, де помилка стосується конкретних полів запиту.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorDetailDto"
+            }
+          },
+          "requestId": {
+            "type": "string",
+            "description": "Ідентифікатор запиту — той самий, що в заголовку `X-Request-Id`.",
+            "example": "0199a3f2-7c1e-7b7a-9f0e-2d6c5a4b3c21"
+          }
+        },
+        "required": [
+          "code",
+          "statusCode",
+          "message",
+          "requestId"
+        ]
+      }
+    }
+  }
+}
