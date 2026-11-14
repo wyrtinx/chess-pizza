@@ -16,7 +16,7 @@ bun run db:up    # Postgres і Mailpit у Docker, чекає, поки стан�
 ```bash
 bun run db:migrate        # застосувати міграції до бази розробки
 bun run db:migrate:test   # застосувати міграції до тестової бази (для smoke-тестів)
-bun run db:seed           # меню, добавки й піцерії; повторний запуск безпечний
+bun run db:seed           # меню, добавки, піцерії й адмін (ADMIN_*); повторний запуск безпечний
 ```
 
 ```bash
@@ -69,22 +69,32 @@ bun run start:prod   # запуск зібраного: bun dist/main.js
 
 Перевіряються схемою при старті: без потрібної змінної або з неправильним значенням застосунок не запускається. Bun сам читає `.env`, а під час `bun test` — ще й `.env.test`.
 
-| Змінна         | За замовчуванням | Навіщо                                                                 |
-| -------------- | ---------------- | ---------------------------------------------------------------------- |
-| `NODE_ENV`     | —                | `development`, `test` або `production`                                 |
-| `PORT`         | `3000`           | порт HTTP-сервера                                                      |
-| `DATABASE_URL` | —                | рядок підключення до PostgreSQL (`postgresql://…`)                     |
-| `CORS_ORIGINS` | —                | дозволені origin фронтенду через кому (`http://localhost:5173`)        |
-| `TRUST_PROXY`  | `0`              | скільки проксі перед застосунком: `0` локально, `1` за проксі хостингу |
-| `DOCS_ENABLED` | `false`          | `true` — документація API на `/docs`                                   |
-| `LOG_LEVEL`    | `info`           | рівень логів pino; `silent` вимикає (зручно в `.env.test`)             |
-| `BODY_LIMIT`   | `100kb`          | ліміт розміру JSON-тіла запиту                                         |
-| `SMTP_HOST`    | —                | SMTP-сервер: `localhost` (Mailpit) або `smtp.gmail.com`                |
-| `SMTP_PORT`    | —                | `1025` (Mailpit) або `465` (Gmail)                                     |
-| `SMTP_SECURE`  | `false`          | `true` — TLS одразу (порт 465)                                         |
-| `SMTP_USER`    | —                | логін SMTP; обов'язковий лише при `NODE_ENV=production`                |
-| `SMTP_PASS`    | —                | пароль SMTP (у Gmail — «пароль застосунку»); як і `SMTP_USER`          |
-| `MAIL_FROM`    | —                | відправник: `Chess Pizza <адреса>`; у Gmail — адреса акаунта           |
+| Змінна              | За замовчуванням | Навіщо                                                                               |
+| ------------------- | ---------------- | ------------------------------------------------------------------------------------ |
+| `NODE_ENV`          | —                | `development`, `test` або `production`                                               |
+| `PORT`              | `3000`           | порт HTTP-сервера                                                                    |
+| `DATABASE_URL`      | —                | рядок підключення до PostgreSQL (`postgresql://…`)                                   |
+| `CORS_ORIGINS`      | —                | дозволені origin фронтенду через кому (`http://localhost:5173`)                      |
+| `TRUST_PROXY`       | `0`              | скільки проксі перед застосунком: `0` локально, `1` за проксі хостингу               |
+| `DOCS_ENABLED`      | `false`          | `true` — документація API на `/docs`                                                 |
+| `LOG_LEVEL`         | `info`           | рівень логів pino; `silent` вимикає (зручно в `.env.test`)                           |
+| `BODY_LIMIT`        | `100kb`          | ліміт розміру JSON-тіла запиту                                                       |
+| `SMTP_HOST`         | —                | SMTP-сервер: `localhost` (Mailpit) або `smtp.gmail.com`                              |
+| `SMTP_PORT`         | —                | `1025` (Mailpit) або `465` (Gmail)                                                   |
+| `SMTP_SECURE`       | `false`          | `true` — TLS одразу (порт 465)                                                       |
+| `SMTP_USER`         | —                | логін SMTP; обов'язковий лише при `NODE_ENV=production`                              |
+| `SMTP_PASS`         | —                | пароль SMTP (у Gmail — «пароль застосунку»); як і `SMTP_USER`                        |
+| `MAIL_FROM`         | —                | відправник: `Chess Pizza <адреса>`; у Gmail — адреса акаунта                         |
+| `JWT_ACCESS_SECRET` | —                | секрет підпису access JWT, ≥ 32 символи (`openssl rand -base64 48`)                  |
+| `COOKIE_SECURE`     | `false`          | `true` — cookie сесії лише через HTTPS; при `NODE_ENV=production` обов'язково `true` |
+
+Лише для `db:seed` (застосунок їх не читає):
+
+| Змінна           | Навіщо                                                                            |
+| ---------------- | --------------------------------------------------------------------------------- |
+| `ADMIN_EMAIL`    | e-mail адміністратора                                                             |
+| `ADMIN_PASSWORD` | пароль, ≥ 8 символів; задається лише при створенні, повторний seed його не змінює |
+| `ADMIN_NAME`     | ім'я, ≥ 2 символи                                                                 |
 
 Лише для тестів (`.env.test`), застосунок її не читає:
 

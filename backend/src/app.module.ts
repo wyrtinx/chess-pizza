@@ -9,11 +9,14 @@ import { createLoggerParams } from './common/logger/logger.config.js';
 import { AppThrottlerGuard } from './common/throttler/app-throttler.guard.js';
 import { throttlerOptions } from './common/throttler/throttler.config.js';
 import { validateEnv } from './config/validate-env.js';
+import { AccessTokenModule } from './modules/auth/access-token.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { MailModule } from './modules/mail/mail.module.js';
 import { MetaModule } from './modules/meta/meta.module.js';
 import { PizzeriasModule } from './modules/pizzerias/pizzerias.module.js';
 import { ProductsModule } from './modules/products/products.module.js';
+import { UsersModule } from './modules/users/users.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({
@@ -28,6 +31,9 @@ import { PrismaModule } from './prisma/prisma.module.js';
     ProductsModule,
     PizzeriasModule,
     MetaModule,
+    AccessTokenModule,
+    UsersModule,
+    AuthModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }],
 })

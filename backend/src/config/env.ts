@@ -9,6 +9,8 @@ import {
   Matches,
   Max,
   Min,
+  MinLength,
+  ValidateBy,
   ValidateIf,
 } from 'class-validator';
 
@@ -41,6 +43,16 @@ const emptyToUndefined = (params: TransformFnParams): unknown => {
 // Credentials are optional for Mailpit, but Gmail in production needs them.
 const isSmtpAuthRequired = (env: Env): boolean =>
   env.NODE_ENV === 'production' || env.SMTP_USER !== undefined || env.SMTP_PASS !== undefined;
+
+// Auth cookies must never travel over plain HTTP in production.
+const TrueInProduction = (): PropertyDecorator =>
+  ValidateBy({
+    name: 'trueInProduction',
+    validator: {
+      validate: (value, args) =>
+        Reflect.get(args?.object ?? {}, 'NODE_ENV') !== 'production' || value === true,
+    },
+  });
 
 const MAIL_FROM_PATTERN =
   /^(?:[^<>]+ <[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+>|[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+)$/;
@@ -111,4 +123,13 @@ export class Env {
 
   @Matches(MAIL_FROM_PATTERN)
   MAIL_FROM: string;
+
+  @IsString()
+  @MinLength(32)
+  JWT_ACCESS_SECRET: string;
+
+  @Transform(toBoolean)
+  @IsBoolean()
+  @TrueInProduction()
+  COOKIE_SECURE: boolean = false;
 }

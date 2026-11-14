@@ -1,7 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 
-const ACCESS_TOKEN_COOKIE = 'cp_at';
+import { ACCESS_TOKEN_COOKIE } from '../../modules/auth/auth.constants.js';
 
 const DESCRIPTION = [
   'API сайту Chess Pizza: вітрина, кошик, оформлення, профіль із бонусами, адмін-панель.',
