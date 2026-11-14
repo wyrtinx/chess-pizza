@@ -53,9 +53,10 @@ backend/
 │  ├─ config/            схема й валідація env
 │  ├─ common/            фільтри, guards, декоратори, пайпи, коди помилок
 │  ├─ prisma/            PrismaModule / PrismaService
+│  ├─ pricing/           константи й чисті розрахунки цін (без Nest і Prisma)
 │  └─ modules/
 │     ├─ auth/  users/  products/  cart/  orders/
-│     ├─ bonuses/  pizzerias/  mail/  health/
+│     ├─ bonuses/  pizzerias/  mail/  meta/  health/
 ├─ prisma/               schema.prisma, migrations/, seed.ts
 ├─ test/                 smoke-сценарії
 ├─ openapi.json          згенерований контракт API (у git)
