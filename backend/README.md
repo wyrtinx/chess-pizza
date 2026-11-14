@@ -21,6 +21,8 @@ bun run start:prod   # запуск зібраного: bun dist/main.js
 
 Перевірка: `GET http://localhost:3000/api/v1/health` → `{ "status": "ok" }`.
 
+Документація API (Scalar): <http://localhost:3000/docs> — якщо `DOCS_ENABLED=true`. Ендпоінти описані там, а не в цьому файлі; контракт для фронтенду — `openapi.json` (оновлюється скриптом `openapi` після кожної зміни API).
+
 Запускати `.ts` напряму через Bun не можна: збирає тільки `nest build`, бо разом із ним працює CLI-плагін Swagger.
 
 ## Локальні сервіси (Docker Compose)
@@ -46,18 +48,24 @@ bun run start:prod   # запуск зібраного: bun dist/main.js
 | `typecheck`   | `tsc --noEmit`                                         |
 | `test`        | `bun test` — smoke-тести потребують `db:up`            |
 | `test:watch`  | `bun test --watch`                                     |
+| `openapi`     | зібрати й записати контракт API в `openapi.json`       |
 | `db:generate` | згенерувати клієнт Prisma в `src/generated/prisma`     |
 | `db:migrate`  | `prisma migrate dev` — створити й застосувати міграцію |
 | `db:studio`   | Prisma Studio                                          |
 
-З кореня монорепо: `bun run lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `test`, `build`, `db:up`, `db:down`.
+З кореня монорепо: `bun run lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `test`, `build`, `openapi`, `db:up`, `db:down`.
 
 ## Змінні оточення
 
 Перевіряються схемою при старті: без потрібної змінної або з неправильним значенням застосунок не запускається. Bun сам читає `.env`, а під час `bun test` — ще й `.env.test`.
 
-| Змінна         | За замовчуванням | Навіщо                                             |
-| -------------- | ---------------- | -------------------------------------------------- |
-| `NODE_ENV`     | —                | `development`, `test` або `production`             |
-| `PORT`         | `3000`           | порт HTTP-сервера                                  |
-| `DATABASE_URL` | —                | рядок підключення до PostgreSQL (`postgresql://…`) |
+| Змінна         | За замовчуванням | Навіщо                                                                 |
+| -------------- | ---------------- | ---------------------------------------------------------------------- |
+| `NODE_ENV`     | —                | `development`, `test` або `production`                                 |
+| `PORT`         | `3000`           | порт HTTP-сервера                                                      |
+| `DATABASE_URL` | —                | рядок підключення до PostgreSQL (`postgresql://…`)                     |
+| `CORS_ORIGINS` | —                | дозволені origin фронтенду через кому (`http://localhost:5173`)        |
+| `TRUST_PROXY`  | `0`              | скільки проксі перед застосунком: `0` локально, `1` за проксі хостингу |
+| `DOCS_ENABLED` | `false`          | `true` — документація API на `/docs`                                   |
+| `LOG_LEVEL`    | `info`           | рівень логів pino; `silent` вимикає (зручно в `.env.test`)             |
+| `BODY_LIMIT`   | `100kb`          | ліміт розміру JSON-тіла запиту                                         |
