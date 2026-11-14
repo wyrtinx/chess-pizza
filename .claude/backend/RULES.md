@@ -12,6 +12,8 @@
 | --- | --- |
 | Рантайм, пакети, тести | **Bun** (не Node, не npm / pnpm / yarn). Лок-файл `bun.lock` — у git |
 | Фреймворк | **NestJS 12**, TypeScript **6.x** `strict` (7 не підтримують Nest CLI і Swagger-плагін) |
+| Модулі | **ESM** (`"type": "module"`) |
+| Лінтер, форматер | **oxlint** (type-aware) + **Prettier** — спільні для монорепо, конфіги й скрипти в корені |
 | База | **PostgreSQL 18** |
 | ORM | **Prisma** — остання стабільна версія (не `rc` / `dev`) |
 | Валідація | `class-validator` + `class-transformer` |
@@ -29,8 +31,11 @@
 ### Особливості Bun
 - **Збирання — `nest build`** (tsc + Swagger CLI-плагін), запуск зібраного — `bun dist/main.js`. Розробка — `nest start --watch --exec bun`. Запускати `.ts` напряму через Bun не можна: тоді CLI-плагін Swagger не спрацює і схеми в документації будуть порожні.
 - Що Bun уміє сам — беремо з Bun, без нативних модулів: паролі — `Bun.password` (argon2id).
-- Тести — `bun test`.
+- Тести — `bun test`: файли `*.spec.ts`, функції тестів імпортуємо з `bun:test`.
 
+### ESM
+- Відносні імпорти — з розширенням `.js` (`import { AppService } from './app.service.js'`), хоча файл `.ts`.
+- `__dirname` і `require` немає: `import.meta.dirname`, `import`. `await` на верхньому рівні дозволений.
 ---
 
 ## 2. Структура бекенду
@@ -213,8 +218,7 @@ backend/
 ## 13. Стиль коду
 
 - TypeScript `strict` + `noUncheckedIndexedAccess`. **Ніякого `any`** — `unknown` і звуження типу.
-- ESLint (typescript-eslint) + Prettier; без «плаваючих» промісів.
-- Імена файлів — kebab-case із суфіксами Nest (`orders.service.ts`, `create-order.dto.ts`). Один клас на файл, без `default export`.
+- **Oxlint** (type-aware) + Prettier, запуск із кореня: `bun run lint`, `bun run format:check`. `backend/.oxlintrc.json` розширює кореневий через `extends`. Без «плаваючих» промісів, без `console` (логи — pino), невикористане — з префіксом `_`. Попередження — теж помилка (`maxWarnings: 0`).- Імена файлів — kebab-case із суфіксами Nest (`orders.service.ts`, `create-order.dto.ts`). Один клас на файл, без `default export`.
 - Усі залежності — через DI, без статичних синглтонів.
 - Код, імена й коментарі — англійською (крім JSDoc для документації, див. розділ 11).
 
