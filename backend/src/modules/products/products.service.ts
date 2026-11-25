@@ -1,17 +1,27 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 import { AppException } from '../../common/errors/app.exception.js';
 import { ErrorCode } from '../../common/errors/error-code.js';
 import { toLocalizedText } from '../../common/localized-text/to-localized-text.js';
+import type { Env } from '../../config/env.js';
 import type { Product } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import type { ProductImageDto } from './dto/product-image.dto.js';
 import type { ProductResponseDto } from './dto/product-response.dto.js';
 import type { OrderableProduct } from './orderable-product.js';
 import { labelProducts, type LabeledProduct } from './product-labels.js';
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly filesUrl: string;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    config: ConfigService<Env, true>,
+  ) {
+    this.filesUrl = config.get('PUBLIC_FILES_URL', { infer: true });
+  }
 
   async findAll(): Promise<ProductResponseDto[]> {
     const products = await this.prisma.product.findMany({
@@ -19,7 +29,9 @@ export class ProductsService {
     });
 
     // There are no orders yet, so nothing is sold: the ranking falls back to sortOrder.
-    return labelProducts(products, new Map(), new Date()).map(toProductResponse);
+    return labelProducts(products, new Map(), new Date()).map((labeled) =>
+      toProductResponse(labeled, this.filesUrl),
+    );
   }
 
   /** Products by id for pricing an order; hidden and deleted ones come back unavailable. */
@@ -44,12 +56,10 @@ export class ProductsService {
   }
 }
 
-function toProductResponse({
-  product,
-  popularity,
-  isNew,
-  isHit,
-}: LabeledProduct<Product>): ProductResponseDto {
+function toProductResponse(
+  { product, popularity, isNew, isHit }: LabeledProduct<Product>,
+  filesUrl: string,
+): ProductResponseDto {
   return {
     id: product.id,
     name: toLocalizedText(product.name),
@@ -60,11 +70,14 @@ function toProductResponse({
     volumeMl: product.volumeMl,
     isVegetarian: product.isVegetarian,
     spicyLevel: product.spicyLevel,
-    // File storage is not wired yet, so no product has a photo.
-    imageUrl: null,
+    image: product.imageKey === null ? null : toProductImage(`${filesUrl}/${product.imageKey}`),
     popularity,
     isNew,
     isHit,
     createdAt: product.createdAt,
   };
+}
+
+function toProductImage(base: string): ProductImageDto {
+  return { card: `${base}/card.webp`, detail: `${base}/detail.webp`, thumb: `${base}/thumb.webp` };
 }

@@ -857,6 +857,31 @@
           "uk"
         ]
       },
+      "ProductImageDto": {
+        "type": "object",
+        "properties": {
+          "card": {
+            "type": "string",
+            "description": "Для картки в меню: 4:3, 540×405.",
+            "example": "http://localhost:3000/files/products/margherita/card.webp"
+          },
+          "detail": {
+            "type": "string",
+            "description": "Для картки товару (модалки): 4:5, 760×950.",
+            "example": "http://localhost:3000/files/products/margherita/detail.webp"
+          },
+          "thumb": {
+            "type": "string",
+            "description": "Мініатюра для кошика: 1:1, 124×124.",
+            "example": "http://localhost:3000/files/products/margherita/thumb.webp"
+          }
+        },
+        "required": [
+          "card",
+          "detail",
+          "thumb"
+        ]
+      },
       "ProductResponseDto": {
         "type": "object",
         "properties": {
@@ -916,10 +941,15 @@
             "description": "Гострота від 0 до 4. Мітка «Гостре» — від 3.",
             "example": 0
           },
-          "imageUrl": {
-            "type": "string",
+          "image": {
             "nullable": true,
-            "description": "Адреса фото. `null` — фото немає, фронтенд показує заглушку."
+            "description": "Фото, обрізані під місця показу (WebP). `null` — фото немає, фронтенд показує заглушку.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductImageDto"
+              }
+            ]
           },
           "popularity": {
             "type": "number",
@@ -950,7 +980,7 @@
           "volumeMl",
           "isVegetarian",
           "spicyLevel",
-          "imageUrl",
+          "image",
           "popularity",
           "isNew",
           "isHit",

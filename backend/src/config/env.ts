@@ -96,6 +96,13 @@ export class Env {
   @Matches(/^\d+(b|kb|mb)$/i)
   BODY_LIMIT: string = '100kb';
 
+  @Transform((params) => {
+    const raw = rawValue(params);
+    return typeof raw === 'string' ? raw.trim().replace(/\/+$/, '') : raw;
+  })
+  @Matches(/^(https?:\/\/[^\s/]+)?\/\S*$/)
+  PUBLIC_FILES_URL: string;
+
   @IsString()
   @IsNotEmpty()
   SMTP_HOST: string;

@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { LocalizedTextDto } from '../../../common/localized-text/localized-text.dto.js';
 import { ProductCategory } from '../../../generated/prisma/enums.js';
+import { ProductImageDto } from './product-image.dto.js';
 
 export class ProductResponseDto {
   /**
@@ -44,8 +45,8 @@ export class ProductResponseDto {
    */
   spicyLevel: number;
 
-  /** Адреса фото. `null` — фото немає, фронтенд показує заглушку. */
-  imageUrl: string | null;
+  /** Фото, обрізані під місця показу (WebP). `null` — фото немає, фронтенд показує заглушку. */
+  image: ProductImageDto | null;
 
   /**
    * Продано штук за останні 30 днів. Список вітрини вже відсортований за цим полем.
