@@ -6,6 +6,7 @@ import { toLocalizedText } from '../../common/localized-text/to-localized-text.j
 import type { Product } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { ProductResponseDto } from './dto/product-response.dto.js';
+import type { OrderableProduct } from './orderable-product.js';
 import { labelProducts, type LabeledProduct } from './product-labels.js';
 
 @Injectable()
@@ -19,6 +20,19 @@ export class ProductsService {
 
     // There are no orders yet, so nothing is sold: the ranking falls back to sortOrder.
     return labelProducts(products, new Map(), new Date()).map(toProductResponse);
+  }
+
+  /** Products by id for pricing an order; hidden and deleted ones come back unavailable. */
+  async findForOrder(ids: readonly string[]): Promise<OrderableProduct[]> {
+    const products = await this.prisma.product.findMany({ where: { id: { in: [...ids] } } });
+
+    return products.map((product) => ({
+      id: product.id,
+      name: toLocalizedText(product.name),
+      category: product.category,
+      basePrice: product.basePrice,
+      available: product.isVisible && product.deletedAt === null,
+    }));
   }
 
   // Goes through the whole showcase because `isHit` depends on the ranking; the menu is small.

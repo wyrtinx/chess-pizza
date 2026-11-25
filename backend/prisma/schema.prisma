@@ -35,6 +35,7 @@ model Product {
   deletedAt    DateTime?       @map("deleted_at") @db.Timestamptz(3)
   createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  orderItems   OrderItem[]
 
   @@index([category])
   @@index([isVisible, deletedAt])
@@ -61,6 +62,7 @@ model Pizzeria {
   sortOrder Int      @default(0) @map("sort_order")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  orders    Order[]
 
   @@map("pizzerias")
 }
@@ -103,6 +105,7 @@ model User {
   updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
   sessions          AuthSession[]
   oneTimeCodes      OneTimeCode[]
+  orders            Order[]
 
   @@map("users")
 }
@@ -141,4 +144,122 @@ model OneTimeCode {
 
   @@unique([userId, purpose])
   @@map("one_time_codes")
+}
+
+enum PizzaSize {
+  CM25
+  CM30
+  CM35
+
+  @@map("pizza_size")
+}
+
+enum Dough {
+  TRADITIONAL
+  THIN
+
+  @@map("dough")
+}
+
+enum Fulfillment {
+  DELIVERY
+  PICKUP
+
+  @@map("fulfillment")
+}
+
+enum PaymentMethod {
+  ON_RECEIPT
+
+  @@map("payment_method")
+}
+
+enum OrderStatus {
+  ACCEPTED
+  BAKING
+  ON_THE_WAY
+  DELIVERED
+  CANCELLED
+
+  @@map("order_status")
+}
+
+model Order {
+  id                 String           @id @default(uuid(7)) @db.Uuid
+  number             Int              @unique @default(autoincrement())
+  userId             String?          @map("user_id") @db.Uuid
+  user               User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  placedAsGuest      Boolean          @map("placed_as_guest")
+  status             OrderStatus      @default(ACCEPTED)
+  fulfillment        Fulfillment
+  pizzeriaId         String?          @map("pizzeria_id") @db.Uuid
+  pizzeria           Pizzeria?        @relation(fields: [pizzeriaId], references: [id])
+  address            String?
+  courierComment     String?          @map("courier_comment")
+  scheduledFor       DateTime?        @map("scheduled_for") @db.Timestamptz(3)
+  contactName        String           @map("contact_name")
+  contactPhone       String           @map("contact_phone")
+  paymentMethod      PaymentMethod    @map("payment_method")
+  locale             Locale
+  itemsSubtotal      Int              @map("items_subtotal")
+  pickupDiscount     Int              @map("pickup_discount")
+  firstOrderDiscount Int              @default(0) @map("first_order_discount")
+  bonusSpent         Int              @default(0) @map("bonus_spent")
+  deliveryFee        Int              @map("delivery_fee")
+  total              Int
+  bonusAccrued       Int?             @map("bonus_accrued")
+  acceptedAt         DateTime         @default(now()) @map("accepted_at") @db.Timestamptz(3)
+  bakingAt           DateTime?        @map("baking_at") @db.Timestamptz(3)
+  onTheWayAt         DateTime?        @map("on_the_way_at") @db.Timestamptz(3)
+  deliveredAt        DateTime?        @map("delivered_at") @db.Timestamptz(3)
+  cancelledAt        DateTime?        @map("cancelled_at") @db.Timestamptz(3)
+  cancelledBy        Role?            @map("cancelled_by")
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  items              OrderItem[]
+  idempotencyKeys    IdempotencyKey[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String          @id @default(uuid(7)) @db.Uuid
+  orderId   String          @map("order_id") @db.Uuid
+  order     Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?         @map("product_id") @db.Uuid
+  product   Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  name      Json
+  category  ProductCategory
+  size      PizzaSize?
+  dough     Dough?
+  /// `[{ code, name, price }]` as at the moment of purchase.
+  toppings  Json
+  unitPrice Int             @map("unit_price")
+  quantity  Int
+  lineTotal Int             @map("line_total")
+  /// Line order in the cart, from 0.
+  position  Int
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model IdempotencyKey {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  key         String
+  scope       String
+  requestHash String   @map("request_hash")
+  orderId     String   @map("order_id") @db.Uuid
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([scope, key])
+  @@map("idempotency_keys")
 }
