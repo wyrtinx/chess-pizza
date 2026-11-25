@@ -16,4 +16,9 @@ export class PizzeriasService {
 
     return pizzerias.map(({ id, address }) => ({ id, address: toLocalizedText(address) }));
   }
+
+  async isActive(id: string): Promise<boolean> {
+    const count = await this.prisma.pizzeria.count({ where: { id, isActive: true } });
+    return count > 0;
+  }
 }

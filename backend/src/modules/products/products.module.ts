@@ -7,6 +7,6 @@ import { ToppingsService } from './toppings.service.js';
 @Module({
   controllers: [ProductsController],
   providers: [ProductsService, ToppingsService],
-  exports: [ToppingsService],
+  exports: [ProductsService, ToppingsService],
 })
 export class ProductsModule {}

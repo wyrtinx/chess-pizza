@@ -530,6 +530,147 @@
           "auth"
         ]
       }
+    },
+    "/api/v1/orders/quote": {
+      "post": {
+        "description": "Рахує суму для екрана оформлення з позицій кошика: ціни позицій, знижку за самовивіз,\nдоставку й суму до сплати. Ціни, що прийшли від клієнта, не потрібні — сервер рахує сам.\nНічого не зберігає.",
+        "operationId": "OrdersController_quote",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`VALIDATION_FAILED` · `PRODUCT_OPTIONS_INVALID`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`CART_EMPTY` · `CART_LIMIT_EXCEEDED` · `CART_HAS_UNAVAILABLE_ITEMS`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Підсумок замовлення",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/orders": {
+      "post": {
+        "description": "Створює замовлення гостя або користувача, що увійшов. Ціни рахує сервер; позиції зберігаються знімком.\nОплата — при отриманні, час — «якнайшвидше».\n\nЗаголовок `Idempotency-Key` обов’язковий (8–100 символів `A–Z a–z 0–9 _ -`, зручно — UUID, новий для кожного оформлення).\nПовтор із тим самим ключем і тим самим тілом повертає вже створене замовлення, а не створює друге;\nтой самий ключ з іншим тілом — `409 IDEMPOTENCY_KEY_MISMATCH`.\n\nНедоступні товари — `409 CART_HAS_UNAVAILABLE_ITEMS`, у `details` — їхні позиції (`items.N`).",
+        "operationId": "OrdersController_create",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Ключ ідемпотентності.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`VALIDATION_FAILED` · `PRODUCT_OPTIONS_INVALID` · `IDEMPOTENCY_KEY_REQUIRED`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`UNAUTHORIZED` · `TOKEN_EXPIRED`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`PIZZERIA_NOT_FOUND`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`CART_EMPTY` · `CART_LIMIT_EXCEEDED` · `CART_HAS_UNAVAILABLE_ITEMS` · `IDEMPOTENCY_KEY_MISMATCH`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cp_at": []
+          }
+        ],
+        "summary": "Оформлення замовлення",
+        "tags": [
+          "orders"
+        ]
+      }
     }
   },
   "info": {
@@ -1403,6 +1544,439 @@
         },
         "required": [
           "user"
+        ]
+      },
+      "Fulfillment": {
+        "type": "string",
+        "enum": [
+          "DELIVERY",
+          "PICKUP"
+        ],
+        "description": "Доставка чи самовивіз."
+      },
+      "OrderItemInputDto": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "description": "Розмір — обов’язковий для піци, для інших товарів його не передають.",
+            "enum": [
+              "CM25",
+              "CM30",
+              "CM35"
+            ],
+            "type": "string",
+            "example": "CM30"
+          },
+          "dough": {
+            "description": "Тісто — обов’язкове для піци, для інших товарів його не передають.",
+            "enum": [
+              "TRADITIONAL",
+              "THIN"
+            ],
+            "type": "string",
+            "example": "TRADITIONAL"
+          },
+          "productId": {
+            "type": "string",
+            "description": "Ідентифікатор товару (UUID).",
+            "example": "0199a3f2-7c1e-7b7a-9f0e-2d6c5a4b3c21",
+            "format": "uuid"
+          },
+          "toppingCodes": {
+            "description": "Коди добавок з `GET /meta` (лише для піци, без повторів).",
+            "example": [
+              "burrata"
+            ],
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Кількість, від 1 до 99.",
+            "example": 2,
+            "minimum": 1,
+            "maximum": 99
+          }
+        },
+        "required": [
+          "productId",
+          "quantity"
+        ]
+      },
+      "QuoteOrderDto": {
+        "type": "object",
+        "properties": {
+          "fulfillment": {
+            "description": "Доставка чи самовивіз.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Fulfillment"
+              }
+            ]
+          },
+          "items": {
+            "description": "Позиції кошика (кошик живе на фронтенді). Від 1 до 30 позицій; ціни сервер рахує сам.\nПорожній список — `409 CART_EMPTY`, понад 30 — `409 CART_LIMIT_EXCEEDED`.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemInputDto"
+            }
+          }
+        },
+        "required": [
+          "fulfillment",
+          "items"
+        ]
+      },
+      "OrderedToppingDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Код добавки.",
+            "example": "burrata"
+          },
+          "name": {
+            "description": "Назва.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedTextDto"
+              }
+            ]
+          },
+          "price": {
+            "type": "number",
+            "description": "Ціна добавки у копійках.",
+            "example": 7900
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "price"
+        ]
+      },
+      "OrderLineDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "description": "Категорія товару.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductCategory"
+              }
+            ]
+          },
+          "size": {
+            "nullable": true,
+            "description": "Розмір піци; `null` — не піца.",
+            "enum": [
+              "CM25",
+              "CM30",
+              "CM35"
+            ],
+            "type": "string",
+            "example": "CM35"
+          },
+          "dough": {
+            "nullable": true,
+            "description": "Тісто; `null` — не піца.",
+            "enum": [
+              "TRADITIONAL",
+              "THIN"
+            ],
+            "type": "string",
+            "example": "TRADITIONAL"
+          },
+          "productId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Ідентифікатор товару (UUID). `null` — товар видалили назавжди.",
+            "example": "0199a3f2-7c1e-7b7a-9f0e-2d6c5a4b3c21"
+          },
+          "name": {
+            "description": "Назва товару на момент замовлення.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedTextDto"
+              }
+            ]
+          },
+          "toppings": {
+            "description": "Добавки з цінами на момент замовлення.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderedToppingDto"
+            }
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Ціна однієї штуки у копійках (розмір, тісто й добавки враховано).",
+            "example": 42800
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Кількість.",
+            "example": 1
+          },
+          "lineTotal": {
+            "type": "number",
+            "description": "Сума позиції у копійках.",
+            "example": 42800
+          }
+        },
+        "required": [
+          "category",
+          "size",
+          "dough",
+          "productId",
+          "name",
+          "toppings",
+          "unitPrice",
+          "quantity",
+          "lineTotal"
+        ]
+      },
+      "QuoteResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Позиції з цінами, порахованими сервером.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineDto"
+            }
+          },
+          "itemsSubtotal": {
+            "type": "number",
+            "description": "Сума страв у копійках.",
+            "example": 50700
+          },
+          "pickupDiscount": {
+            "type": "number",
+            "description": "Знижка за самовивіз (5 % від суми страв, до цілої гривні) у копійках; для доставки — 0.",
+            "example": 0
+          },
+          "deliveryFee": {
+            "type": "number",
+            "description": "Вартість доставки у копійках: 0 для самовивозу й від 600 ₴ суми страв.",
+            "example": 7900
+          },
+          "freeDeliveryRemaining": {
+            "type": "number",
+            "description": "Скільки ще додати страв до безкоштовної доставки, у копійках; 0 — вже безкоштовно.",
+            "example": 9300
+          },
+          "total": {
+            "type": "number",
+            "description": "До сплати у копійках.",
+            "example": 58600
+          }
+        },
+        "required": [
+          "items",
+          "itemsSubtotal",
+          "pickupDiscount",
+          "deliveryFee",
+          "freeDeliveryRemaining",
+          "total"
+        ]
+      },
+      "CreateOrderDto": {
+        "type": "object",
+        "properties": {
+          "fulfillment": {
+            "description": "Доставка чи самовивіз.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Fulfillment"
+              }
+            ]
+          },
+          "items": {
+            "description": "Позиції кошика (кошик живе на фронтенді). Від 1 до 30 позицій; ціни сервер рахує сам.\nПорожній список — `409 CART_EMPTY`, понад 30 — `409 CART_LIMIT_EXCEEDED`.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemInputDto"
+            }
+          },
+          "name": {
+            "type": "string",
+            "description": "Ім’я отримувача, від 2 до 100 символів.",
+            "example": "Олена",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string",
+            "description": "Телефон: `+380XXXXXXXXX` або `0XXXXXXXXX`, можна з пробілами, дефісами й дужками.\nУ відповіді — у форматі E.164.",
+            "example": "+380 67 123 45 67"
+          },
+          "address": {
+            "type": "string",
+            "description": "Адреса доставки: від 5 символів і з номером будинку. Обов’язкова для доставки, для самовивозу ігнорується.",
+            "example": "вул. Хрещатик, 22, кв. 5",
+            "minLength": 5,
+            "maxLength": 200
+          },
+          "courierComment": {
+            "type": "string",
+            "description": "Коментар кур’єру (під’їзд, поверх, домофон), до 500 символів. Лише для доставки.",
+            "example": "Домофон 5, третій поверх",
+            "maxLength": 500
+          },
+          "pizzeriaId": {
+            "type": "string",
+            "description": "Піцерія для самовивозу (`GET /pizzerias`). Обов’язкова для самовивозу, для доставки ігнорується.",
+            "example": "0199a3f2-7c1e-7b7a-9f0e-2d6c5a4b3c21",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "fulfillment",
+          "items",
+          "name",
+          "phone"
+        ]
+      },
+      "OrderStatus": {
+        "type": "string",
+        "enum": [
+          "ACCEPTED",
+          "BAKING",
+          "ON_THE_WAY",
+          "DELIVERED",
+          "CANCELLED"
+        ],
+        "description": "Статус. Нове замовлення — завжди `ACCEPTED`."
+      },
+      "PaymentMethod": {
+        "type": "string",
+        "enum": [
+          "ON_RECEIPT"
+        ],
+        "description": "Спосіб оплати. Поки лише при отриманні."
+      },
+      "OrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "description": "Статус. Нове замовлення — завжди `ACCEPTED`.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderStatus"
+              }
+            ]
+          },
+          "fulfillment": {
+            "description": "Доставка чи самовивіз.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Fulfillment"
+              }
+            ]
+          },
+          "paymentMethod": {
+            "description": "Спосіб оплати. Поки лише при отриманні.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentMethod"
+              }
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Ідентифікатор замовлення (UUID).",
+            "example": "0199a3f2-7c1e-7b7a-9f0e-2d6c5a4b3c21"
+          },
+          "number": {
+            "type": "number",
+            "description": "Номер замовлення для людей (`#42`).",
+            "example": 42
+          },
+          "pizzeriaId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Піцерія самовивозу; `null` — доставка."
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "description": "Адреса доставки; `null` — самовивіз."
+          },
+          "courierComment": {
+            "type": "string",
+            "nullable": true,
+            "description": "Коментар кур’єру."
+          },
+          "contactName": {
+            "type": "string",
+            "description": "Ім’я отримувача.",
+            "example": "Олена"
+          },
+          "contactPhone": {
+            "type": "string",
+            "description": "Телефон у форматі E.164.",
+            "example": "+380671234567"
+          },
+          "items": {
+            "description": "Позиції — знімок на момент замовлення.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineDto"
+            }
+          },
+          "itemsSubtotal": {
+            "type": "number",
+            "description": "Сума страв у копійках.",
+            "example": 50700
+          },
+          "pickupDiscount": {
+            "type": "number",
+            "description": "Знижка за самовивіз у копійках.",
+            "example": 0
+          },
+          "deliveryFee": {
+            "type": "number",
+            "description": "Вартість доставки у копійках.",
+            "example": 7900
+          },
+          "total": {
+            "type": "number",
+            "description": "До сплати у копійках.",
+            "example": 58600
+          },
+          "etaMinutes": {
+            "type": "number",
+            "description": "Орієнтовний час приготування й доставки, у хвилинах.",
+            "example": 35
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Коли створено."
+          }
+        },
+        "required": [
+          "status",
+          "fulfillment",
+          "paymentMethod",
+          "id",
+          "number",
+          "pizzeriaId",
+          "address",
+          "courierComment",
+          "contactName",
+          "contactPhone",
+          "items",
+          "itemsSubtotal",
+          "pickupDiscount",
+          "deliveryFee",
+          "total",
+          "etaMinutes",
+          "createdAt"
         ]
       }
     }
