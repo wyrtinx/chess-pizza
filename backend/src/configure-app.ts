@@ -1,3 +1,5 @@
+import { join } from 'node:path';
+
 import type { NestApplicationOptions } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -16,6 +18,8 @@ import {
 import type { Env } from './config/env.js';
 
 export const GLOBAL_PREFIX = 'api/v1';
+const PUBLIC_FILES_PATH = 'files';
+const PUBLIC_FILES_DIR = join(import.meta.dirname, '..', 'assets');
 
 // bodyParser is off so that configureApp registers the JSON parser alone, with BODY_LIMIT.
 export const APP_OPTIONS: NestApplicationOptions = { bufferLogs: true, bodyParser: false };
@@ -33,6 +37,13 @@ export function configureApp(app: NestExpressApplication): void {
     exposedHeaders: [REQUEST_ID_HEADER, 'Retry-After'],
   });
   app.useBodyParser('json', { limit: config.get('BODY_LIMIT', { infer: true }) });
+  app.useStaticAssets(PUBLIC_FILES_DIR, {
+    prefix: `/${PUBLIC_FILES_PATH}/`,
+    index: false,
+    maxAge: '1d',
+    // helmet allows same-origin only; product photos are shown on the frontend's origin.
+    setHeaders: (res) => res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'),
+  });
 
   app.setGlobalPrefix(GLOBAL_PREFIX);
   app.useGlobalPipes(createValidationPipe());

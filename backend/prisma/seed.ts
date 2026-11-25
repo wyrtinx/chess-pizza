@@ -20,6 +20,10 @@ try {
     ...PRODUCTS.map((product) =>
       prisma.product.upsert({ where: { id: product.id }, create: product, update: {} }),
     ),
+    // Photos arrived after the first seed: fill them in where nobody has set one yet.
+    ...PRODUCTS.map(({ id, imageKey }) =>
+      prisma.product.updateMany({ where: { id, imageKey: null }, data: { imageKey } }),
+    ),
     ...TOPPINGS.map((topping) =>
       prisma.topping.upsert({ where: { code: topping.code }, create: topping, update: topping }),
     ),
